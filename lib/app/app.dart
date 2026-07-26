@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:restaurant_roulette/features/home/pages/home_page.dart';
 
 class RestaurantRouletteApp extends StatelessWidget {
   const RestaurantRouletteApp({super.key});
@@ -8,17 +9,7 @@ class RestaurantRouletteApp extends StatelessWidget {
     return MaterialApp(
       title: 'Restaurant Roulette',
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text("Restaurant Roulette"),
-        ),
-        body: const Center(
-          child: Text(
-            "開始打造你的第一個 APP 🍜",
-            style: TextStyle(fontSize: 22),
-          ),
-        ),
-      ),
+      home: const HomePage(),
     );
   }
 }
