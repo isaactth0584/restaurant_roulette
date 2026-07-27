@@ -1,44 +1,127 @@
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
+import '../../restaurant/models/restaurant.dart';
+import '../controllers/home_controller.dart';
+import '../widgets/filter_section.dart';
+import '../widgets/header_section.dart';
+import '../widgets/start_button.dart';
+import '../widgets/wheel_section.dart';
+
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final HomeController _controller = HomeController();
+
+  Restaurant? _selectedRestaurant;
+
+  void _drawRestaurant() {
+    final restaurant = _controller.randomRestaurant();
+
+    setState(() {
+      _selectedRestaurant = restaurant;
+    });
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("🎉 抽餐結果"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                restaurant.name,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text("🍽️ 類型：${restaurant.category}"),
+              Text("⭐ 評分：${restaurant.rating}"),
+              Text("📍 地址：${restaurant.address}"),
+              Text("🚶 距離：${restaurant.distance} km"),
+              Text(
+                restaurant.isOpen ? "🟢 營業中" : "🔴 已打烊",
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("確定"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF8F3),
+      backgroundColor: const Color(0xFFF8F8F8),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "📍 正在取得位置...",
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey,
+              const HeaderSection(),
+              const SizedBox(height: 40),
+
+              const WheelSection(),
+              const SizedBox(height: 40),
+
+              FilterSection(),
+              const SizedBox(height: 40),
+
+              if (_selectedRestaurant != null)
+                Card(
+                  elevation: 0,
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "🎯 本次抽中",
+                          style: TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _selectedRestaurant!.name,
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text("🍽️ ${_selectedRestaurant!.category}"),
+                        Text("⭐ ${_selectedRestaurant!.rating}"),
+                        Text("📍 ${_selectedRestaurant!.address}"),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 20),
+              if (_selectedRestaurant != null)
+                const SizedBox(height: 24),
 
-              const Text(
-                "今天想吃什麼？",
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                "讓 Restaurant Roulette 幫你決定 🍜",
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.black54,
-                ),
+              StartButton(
+                onPressed: _drawRestaurant,
               ),
             ],
           ),
