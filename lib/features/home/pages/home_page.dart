@@ -20,8 +20,41 @@ class _HomePageState extends State<HomePage> {
 
   Restaurant? _selectedRestaurant;
 
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRestaurants();
+  }
+
+  Future<void> _loadRestaurants() async {
+    try {
+      await _controller.loadNearbyRestaurants();
+
+      setState(() {
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
   void _drawRestaurant() {
     final restaurant = _controller.randomRestaurant();
+
+    if (restaurant == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("附近沒有找到餐廳"),
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _selectedRestaurant = restaurant;
@@ -44,10 +77,8 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 12),
-              Text("🍽️ 類型：${restaurant.category}"),
-              Text("⭐ 評分：${restaurant.rating}"),
-              Text("📍 地址：${restaurant.address}"),
-              Text("🚶 距離：${restaurant.distance} km"),
+              Text("⭐ ${restaurant.rating}"),
+              Text("📍 ${restaurant.address}"),
               Text(
                 restaurant.isOpen ? "🟢 營業中" : "🔴 已打烊",
               ),
@@ -66,6 +97,28 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              _error!,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       body: SafeArea(

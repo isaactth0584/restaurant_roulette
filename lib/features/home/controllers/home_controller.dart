@@ -1,12 +1,31 @@
 import 'dart:math';
 
-import '../../restaurant/data/restaurant_data.dart';
+import '../../../core/services/location_service.dart';
 import '../../restaurant/models/restaurant.dart';
+import '../../restaurant/services/place_service.dart';
 
 class HomeController {
+  final LocationService _locationService = LocationService();
+  final PlaceService _placeService = PlaceService();
+
   final Random _random = Random();
 
-  Restaurant randomRestaurant() {
-    return restaurantList[_random.nextInt(restaurantList.length)];
+  List<Restaurant> _restaurants = [];
+
+  List<Restaurant> get restaurants => _restaurants;
+
+  Future<void> loadNearbyRestaurants() async {
+    final position = await _locationService.getCurrentLocation();
+
+    _restaurants = await _placeService.searchNearbyRestaurants(
+      latitude: position.latitude,
+      longitude: position.longitude,
+    );
+  }
+
+  Restaurant? randomRestaurant() {
+    if (_restaurants.isEmpty) return null;
+
+    return _restaurants[_random.nextInt(_restaurants.length)];
   }
 }
