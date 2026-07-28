@@ -12,8 +12,12 @@ class PlaceService {
   Future<List<Restaurant>> searchNearbyRestaurants({
     required double latitude,
     required double longitude,
+    String type = "restaurant",
+    double radius = 3000,
   }) async {
     try {
+      print("===== 開始呼叫 Google Places =====");
+
       final response = await _dio.post(
         "https://places.googleapis.com/v1/places:searchNearby",
         options: Options(
@@ -23,6 +27,7 @@ class PlaceService {
             "X-Goog-FieldMask":
                 "places.id,"
                 "places.displayName,"
+                "places.primaryType,"
                 "places.formattedAddress,"
                 "places.rating,"
                 "places.priceLevel,"
@@ -31,7 +36,7 @@ class PlaceService {
           },
         ),
         data: jsonEncode({
-          "includedTypes": ["restaurant"],
+          "includedTypes": [type],
           "maxResultCount": 20,
           "locationRestriction": {
             "circle": {
@@ -39,22 +44,42 @@ class PlaceService {
                 "latitude": latitude,
                 "longitude": longitude,
               },
-              "radius": 3000,
+              "radius": radius,
             }
           }
         }),
       );
 
+      print(response.data);
+
       final List places = response.data["places"] ?? [];
 
-      return places
-          .map((json) => Restaurant.fromJson(json))
+      final restaurants = places
+          .map(
+            (json) => Restaurant.fromJson(
+              json,
+              latitude,
+              longitude,
+            ),
+          )
+          // 不抽到已打烊
+          .where((restaurant) => restaurant.isOpen)
+          // 評分至少3星
+          .where((restaurant) => restaurant.rating >= 3)
           .toList();
+
+      return restaurants;
     } on DioException catch (e) {
+      print("========== Google Places Error ==========");
+      print(e.response?.statusCode);
+      print(e.response?.data);
+
       throw Exception(
-        e.response?.data.toString() ?? "Failed to fetch nearby restaurants.",
+        e.response?.data.toString() ??
+            "Failed to fetch nearby restaurants.",
       );
     } catch (e) {
+      print(e);
       throw Exception("Unexpected error: $e");
     }
   }

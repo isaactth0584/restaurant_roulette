@@ -13,7 +13,7 @@ class RestaurantCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
+      elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
@@ -40,14 +40,51 @@ class RestaurantCard extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-            Text("🍜 ${restaurant.category}"),
-            Text("⭐ ${restaurant.rating}"),
-            Text("📍 ${restaurant.address}"),
-            Text("🚶 ${restaurant.distance} km"),
+            Text(
+              "${restaurant.emoji} ${restaurant.category}",
+              style: const TextStyle(fontSize: 16),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              "⭐ ${restaurant.rating}",
+              style: const TextStyle(fontSize: 16),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              "💰 ${restaurant.priceText}",
+              style: const TextStyle(fontSize: 16),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              "📍 ${restaurant.address}",
+              style: const TextStyle(fontSize: 16),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              "🚶 ${restaurant.distance.toStringAsFixed(2)} km",
+              style: const TextStyle(fontSize: 16),
+            ),
+
+            const SizedBox(height: 8),
+
             Text(
               restaurant.isOpen ? "🟢 營業中" : "🔴 已打烊",
+              style: TextStyle(
+                fontSize: 16,
+                color: restaurant.isOpen
+                    ? Colors.green
+                    : Colors.red,
+              ),
             ),
           ],
         ),

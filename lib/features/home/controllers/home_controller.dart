@@ -14,12 +14,17 @@ class HomeController {
 
   List<Restaurant> get restaurants => _restaurants;
 
-  Future<void> loadNearbyRestaurants() async {
+  Future<void> loadNearbyRestaurants({
+    required double radius,
+    required String type,
+  }) async {
     final position = await _locationService.getCurrentLocation();
 
     _restaurants = await _placeService.searchNearbyRestaurants(
       latitude: position.latitude,
       longitude: position.longitude,
+      radius: radius,
+      type: type,
     );
   }
 

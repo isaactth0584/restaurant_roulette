@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/cuisine_types.dart';
 import '../../restaurant/models/restaurant.dart';
 import '../../restaurant/widgets/restaurant_card.dart';
 import '../controllers/home_controller.dart';
@@ -23,6 +24,12 @@ class _HomePageState extends State<HomePage> {
   bool _loading = true;
   String? _error;
 
+  double _distance = 3;
+
+  int _priceLevel = 0;
+
+  CuisineType _selectedCuisine = cuisineTypes.first;
+
   @override
   void initState() {
     super.initState();
@@ -31,7 +38,14 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadRestaurants() async {
     try {
-      await _controller.loadNearbyRestaurants();
+      setState(() {
+        _loading = true;
+      });
+
+      await _controller.loadNearbyRestaurants(
+        radius: _distance * 1000,
+        type: _selectedCuisine.googleType,
+      );
 
       setState(() {
         _loading = false;
@@ -45,16 +59,29 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _drawRestaurant() {
-    final restaurant = _controller.randomRestaurant();
+    final candidates = _controller.restaurants.where((restaurant) {
 
-    if (restaurant == null) {
+      if (_priceLevel != 0 &&
+          restaurant.priceLevel != _priceLevel) {
+        return false;
+      }
+
+      return true;
+
+    }).toList();
+
+    if (candidates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("附近沒有找到餐廳"),
+          content: Text("沒有符合條件的餐廳"),
         ),
       );
       return;
     }
+
+    candidates.shuffle();
+
+    final restaurant = candidates.first;
 
     setState(() {
       _selectedRestaurant = restaurant;
@@ -62,13 +89,15 @@ class _HomePageState extends State<HomePage> {
 
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (_) {
         return AlertDialog(
-          title: const Text("🎉 抽餐結果"),
+          title: const Text("🎉 抽中餐廳"),
+
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               Text(
                 restaurant.name,
                 style: const TextStyle(
@@ -76,17 +105,40 @@ class _HomePageState extends State<HomePage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 12),
-              Text("⭐ ${restaurant.rating}"),
-              Text("📍 ${restaurant.address}"),
+
+              const SizedBox(height: 16),
+
               Text(
-                restaurant.isOpen ? "🟢 營業中" : "🔴 已打烊",
+                "${restaurant.emoji} ${restaurant.category}",
+              ),
+
+              Text("⭐ ${restaurant.rating}"),
+
+              Text(
+                "💰 ${"⭐" * restaurant.priceLevel}",
+              ),
+
+              Text(
+                "🚶 ${restaurant.distance.toStringAsFixed(2)} km",
+              ),
+
+              Text(
+                "📍 ${restaurant.address}",
+              ),
+
+              Text(
+                restaurant.isOpen
+                    ? "🟢 營業中"
+                    : "🔴 已打烊",
               ),
             ],
           ),
+
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.pop(context);
+              },
               child: const Text("確定"),
             ),
           ],
@@ -94,8 +146,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
-  @override
+    @override
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(
@@ -127,14 +178,44 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               const HeaderSection(),
-              const SizedBox(height: 40),
+
+              const SizedBox(height: 32),
 
               const WheelSection(),
-              const SizedBox(height: 40),
 
-              const FilterSection(),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
+
+              FilterSection(
+                distance: _distance,
+                priceLevel: _priceLevel,
+                selectedCuisine: _selectedCuisine,
+
+                onDistanceChanged: (value) {
+                  setState(() {
+                    _distance = value;
+                  });
+
+                  _loadRestaurants();
+                },
+
+                onPriceChanged: (value) {
+                  setState(() {
+                    _priceLevel = value;
+                  });
+                },
+
+                onCuisineChanged: (value) {
+                  setState(() {
+                    _selectedCuisine = value;
+                  });
+
+                  _loadRestaurants();
+                },
+              ),
+
+              const SizedBox(height: 30),
 
               if (_selectedRestaurant != null)
                 RestaurantCard(
@@ -144,8 +225,11 @@ class _HomePageState extends State<HomePage> {
               if (_selectedRestaurant != null)
                 const SizedBox(height: 24),
 
-              StartButton(
-                onPressed: _drawRestaurant,
+              SizedBox(
+                width: double.infinity,
+                child: StartButton(
+                  onPressed: _drawRestaurant,
+                ),
               ),
             ],
           ),
